@@ -1,0 +1,1808 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Space Craft</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#0A0D1C;
+    --surface:#131832;
+    --surface-2:#1B2247;
+    --surface-3:#232C5C;
+    --border:#2E3768;
+    --border-bright:#46508C;
+    --text:#E7EBFB;
+    --text-dim:#8C96C4;
+    --text-faint:#5C6494;
+    --accent:#55E6C1;
+    --accent-dim:rgba(85,230,193,.14);
+    --accent-2:#C084FC;
+    --accent-2-dim:rgba(192,132,252,.14);
+    --warn:#FFB454;
+    --warn-dim:rgba(255,180,84,.14);
+    --good:#6EE7A8;
+    --good-dim:rgba(110,231,168,.14);
+    --danger:#FB7185;
+    --danger-dim:rgba(251,113,133,.14);
+    --font-display:'Chakra Petch','IBM Plex Sans KR',sans-serif;
+    --font-body:'IBM Plex Sans KR','Chakra Petch',sans-serif;
+    --font-mono:'IBM Plex Mono','Chakra Petch',monospace;
+    --radius-s:6px;
+    --radius-m:10px;
+    --radius-l:16px;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+  }
+  html{color-scheme:dark;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:15px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:.01em;}
+  p{margin:0;}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input,select,textarea{font-family:var(--font-body);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .starfield{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+  .app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+
+  /* ---------- header ---------- */
+  .console-header{
+    display:flex;flex-wrap:wrap;align-items:center;gap:20px;
+    padding:16px 24px;
+    background:linear-gradient(180deg,rgba(19,24,50,.92),rgba(19,24,50,.75));
+    border-bottom:1px solid var(--border);
+    backdrop-filter:blur(6px);
+    position:sticky;top:0;z-index:10;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-icon{
+    font-size:22px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+    background:var(--surface-2);border:1px solid var(--border-bright);border-radius:var(--radius-m);
+  }
+  .brand-text{display:flex;flex-direction:column;line-height:1.2;}
+  .brand-name{font-family:var(--font-display);font-weight:700;font-size:1.15rem;letter-spacing:.08em;color:var(--text);}
+  .brand-sub{font-size:.75rem;color:var(--text-dim);}
+
+  .tabs{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:220px;padding:2px;}
+  .tab{
+    flex:0 0 auto;
+    background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
+    padding:9px 14px;border-radius:var(--radius-s);font-size:.85rem;font-weight:500;
+    transition:border-color .15s,color .15s,background .15s;
+    white-space:nowrap;
+  }
+  .tab:hover{color:var(--text);border-color:var(--border-bright);}
+  .tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+
+  /* ---------- layout ---------- */
+  .viewport{flex:1;max-width:1180px;width:100%;margin:0 auto;padding:28px 24px 64px;}
+  .panel{display:flex;flex-direction:column;gap:22px;}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);
+    padding:22px;
+  }
+  .eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;font-family:var(--font-mono);}
+
+  /* ---------- toolbar ---------- */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .btn{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    padding:8px 13px;border-radius:var(--radius-s);font-size:.82rem;font-weight:500;
+    transition:border-color .15s,background .15s;
+  }
+  .btn:hover{border-color:var(--border-bright);}
+  .btn.primary{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+  .btn.danger-ghost{color:var(--danger);}
+  .btn.danger-ghost.confirming{background:var(--danger-dim);border-color:var(--danger);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--border);}
+  .hint{color:var(--text-faint);font-size:.78rem;}
+
+  /* ---------- mind map ---------- */
+  .mm-body{display:flex;gap:14px;align-items:stretch;}
+  .mm-outline{
+    width:220px;flex:0 0 220px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);
+    padding:10px;overflow-y:auto;max-height:520px;
+    display:flex;flex-direction:column;gap:1px;
+  }
+  .mm-outline-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-family:var(--font-mono);padding:2px 6px 8px;}
+  .mm-outline-tree{display:flex;flex-direction:column;gap:1px;}
+  .mm-outline-row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--radius-s);cursor:pointer;font-size:.82rem;overflow:hidden;}
+  .mm-outline-row:hover{background:var(--surface-3);}
+  .mm-outline-row.active{background:var(--accent-dim);color:var(--accent);}
+  .mm-outline-caret{width:14px;flex:0 0 auto;text-align:center;color:var(--text-faint);font-size:.65rem;cursor:pointer;}
+  .mm-outline-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .mm-outline-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  #mm-card:fullscreen .mm-body{flex:1 1 auto;min-height:0;}
+  #mm-card:fullscreen .mm-outline{max-height:none;}
+  #mm-card:-webkit-full-screen .mm-body{flex:1 1 auto;min-height:0;}
+  #mm-card:-webkit-full-screen .mm-outline{max-height:none;}
+  @media (max-width:640px){
+    .mm-body{flex-direction:column;}
+    .mm-outline{width:100%;flex:0 0 auto;max-height:180px;}
+  }
+  .mindmap-canvas{
+    position:relative;width:100%;height:520px;flex:1 1 auto;min-width:0;
+    background:
+      linear-gradient(var(--border) 1px,transparent 1px) 0 0/32px 32px,
+      linear-gradient(90deg,var(--border) 1px,transparent 1px) 0 0/32px 32px,
+      var(--surface-2);
+    background-blend-mode:normal;
+    border:1px solid var(--border);border-radius:var(--radius-m);
+    overflow:hidden;
+    cursor:grab;
+    touch-action:none;
+  }
+  .mindmap-canvas.panning{cursor:grabbing;}
+  #mm-card:fullscreen{background:var(--bg);padding:22px;overflow:auto;}
+  #mm-card:fullscreen .mindmap-canvas{flex:1 1 auto;height:auto;}
+  #mm-card:-webkit-full-screen{background:var(--bg);padding:22px;overflow:auto;}
+  #mm-card:-webkit-full-screen .mindmap-canvas{flex:1 1 auto;height:auto;}
+  .mm-world{
+    position:absolute;top:0;left:0;width:1600px;height:900px;
+    transform-origin:0 0;
+  }
+  .mm-world svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .node{
+    position:absolute;transform:translate(-50%,-50%);
+    background:var(--surface);border:1.5px solid var(--node-color,var(--accent));
+    color:var(--text);padding:9px 14px;border-radius:99px;font-size:.85rem;font-weight:500;
+    max-width:180px;text-align:center;cursor:grab;user-select:none;
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--node-color,var(--accent)) 12%, transparent);
+  }
+  .node.core{font-weight:700;padding:12px 20px;font-size:.92rem;}
+  .node.und-fuzzy{filter:saturate(.5) brightness(.96);opacity:.82;}
+  .node.und-unknown{filter:grayscale(1);opacity:.5;}
+  .node.flash{animation:mmFlash .9s ease;}
+  .node.picked{box-shadow:0 0 0 3px var(--accent-2),0 0 0 6px color-mix(in srgb, var(--accent-2) 22%, transparent);}
+  @keyframes mmFlash{
+    0%{box-shadow:0 0 0 6px var(--accent-2);}
+    100%{box-shadow:0 0 0 4px color-mix(in srgb, var(--node-color,var(--accent)) 12%, transparent);}
+  }
+  .node:active{cursor:grabbing;}
+  .node[contenteditable="true"]{cursor:text;}
+  .node-delete{
+    position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;
+    background:var(--danger);color:#1a0508;font-size:.65rem;line-height:18px;text-align:center;
+    opacity:0;transition:opacity .12s;font-weight:700;
+  }
+  .node:hover .node-delete{opacity:1;}
+  .node-addchild{
+    position:absolute;bottom:-8px;left:-8px;width:18px;height:18px;border-radius:50%;
+    background:var(--good);color:#062012;font-size:.78rem;line-height:17px;text-align:center;
+    opacity:0;transition:opacity .12s;font-weight:700;
+  }
+  .node:hover .node-addchild{opacity:1;}
+  .canvas-empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:.85rem;pointer-events:none;}
+
+  /* ---------- presentation script panel ---------- */
+  .mm-script-panel{display:flex;flex-direction:column;gap:12px;}
+  .mm-script-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .mm-script-close{background:none;border:none;color:var(--text-faint);font-size:1.1rem;padding:2px 6px;flex:0 0 auto;}
+  .mm-script-close:hover{color:var(--danger);}
+  .mm-script-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-family:var(--font-mono);margin-bottom:8px;display:block;}
+  .mm-script-textarea{width:100%;min-height:160px;resize:vertical;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:12px;font-size:.9rem;line-height:1.6;font-family:var(--font-body);}
+  .mm-script-result{padding:12px 14px;background:var(--surface-2);border:1px solid var(--border-bright);border-radius:var(--radius-m);font-size:.85rem;color:var(--text-dim);}
+
+  /* ---------- draft node picker ---------- */
+  .draft-picker-box{
+    display:flex;flex-direction:column;gap:12px;padding:16px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);
+  }
+  .draft-picker{display:flex;gap:14px;align-items:stretch;}
+  .draft-picker-list{
+    width:220px;flex:0 0 220px;max-height:280px;overflow-y:auto;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
+    padding:8px;display:flex;flex-direction:column;gap:1px;
+  }
+  .draft-picker-preview{
+    flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
+    padding:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;
+  }
+  .draft-picker-memo{color:var(--text-dim);font-size:.88rem;line-height:1.6;white-space:pre-wrap;margin:0;}
+  .draft-picker-memo.empty{color:var(--text-faint);font-style:italic;}
+  @media (max-width:640px){
+    .draft-picker{flex-direction:column;}
+    .draft-picker-list{width:100%;flex:0 0 auto;max-height:160px;}
+  }
+
+  /* ---------- draft scripts ---------- */
+  .draft-textarea{width:100%;min-height:400px;resize:vertical;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:14px;font-size:.92rem;line-height:1.7;font-family:var(--font-body);}
+  .draft-title-input{
+    display:block;margin-top:6px;width:100%;max-width:420px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);
+    color:var(--text);font-family:var(--font-display);font-weight:700;font-size:1.1rem;padding:8px 12px;
+  }
+
+  .draft-layout{display:flex;gap:20px;align-items:flex-start;}
+  .draft-main{flex:2 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
+  .draft-feedback{
+    flex:1 1 0;min-width:0;max-width:360px;align-self:stretch;
+    display:flex;flex-direction:column;gap:8px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);
+    padding:16px;
+  }
+  .draft-feedback-body{
+    flex:1;min-height:0;max-height:640px;overflow-y:auto;
+    color:var(--text-dim);font-size:.88rem;line-height:1.75;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .draft-feedback-body p{margin:0;white-space:pre-wrap;}
+  .draft-feedback-empty{color:var(--text-faint);font-style:italic;}
+  .draft-feedback-loading{color:var(--text-dim);font-style:italic;}
+  .draft-feedback-error{color:var(--danger);}
+  @media (max-width:640px){
+    .draft-layout{flex-direction:column;}
+    .draft-feedback{max-width:none;width:100%;}
+    .draft-feedback-body{max-height:300px;}
+  }
+
+  .draftlist-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .draftlist-search{
+    display:flex;align-items:center;gap:6px;flex:1 1 200px;min-width:160px;max-width:320px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);
+    padding:6px 10px;
+  }
+  .draftlist-search-icon{font-size:.85rem;opacity:.7;flex:0 0 auto;}
+  .draftlist-search-input{
+    flex:1;min-width:0;background:none;border:none;color:var(--text);font-size:.85rem;
+  }
+  .draftlist-search-input:focus{outline:none;}
+  .draftlist-sort{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+  .draftlist-sort-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+  .draftlist-items{display:flex;flex-direction:column;gap:10px;}
+  .draftlist-empty{color:var(--text-faint);font-size:.85rem;}
+  .draftlist-item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);
+    transition:border-color .15s,opacity .15s;
+  }
+  .draftlist-item:hover{border-color:var(--border-bright);}
+  .draftlist-item.dragging{opacity:.4;}
+  .draftlist-item-handle{flex:0 0 auto;color:var(--text-faint);font-size:.9rem;cursor:grab;letter-spacing:-1px;}
+  .draftlist-item-handle.disabled{opacity:.25;cursor:default;}
+  .draftlist-item-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+  .draftlist-item-title{font-weight:600;color:var(--text);font-size:.95rem;}
+  .draftlist-item-preview{
+    color:var(--text-dim);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  }
+  .draftlist-item-rm{background:none;border:none;color:var(--text-faint);font-size:1rem;padding:4px 8px;flex:0 0 auto;}
+  .draftlist-item-rm:hover{color:var(--danger);}
+
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+    background:var(--surface-2);border:1px solid var(--border-bright);color:var(--text);
+    padding:10px 18px;border-radius:99px;font-size:.85rem;box-shadow:0 8px 24px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:80vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- npc companion ---------- */
+  .npc{
+    position:fixed;width:64px;height:64px;z-index:40;
+    cursor:grab;touch-action:none;user-select:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .npc:active{cursor:grabbing;}
+  .npc-avatar{
+    width:100%;height:100%;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--surface-3), var(--surface));
+    border:2px solid var(--accent);box-shadow:0 0 0 5px var(--accent-dim),0 8px 20px rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;font-size:1.7rem;
+    transition:transform .15s;
+  }
+  .npc.dragging .npc-avatar{transform:scale(1.08);box-shadow:0 0 0 7px var(--accent-dim),0 10px 26px rgba(0,0,0,.5);}
+  .npc-bubble{
+    position:absolute;bottom:100%;left:50%;transform:translateX(-50%) translateY(6px) scale(.92);
+    margin-bottom:10px;max-width:200px;width:max-content;
+    background:var(--surface-2);border:1px solid var(--border-bright);color:var(--text);
+    padding:8px 12px;border-radius:var(--radius-m);font-size:.78rem;line-height:1.4;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+  .npc-bubble::after{
+    content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:var(--border-bright);
+  }
+  .npc-bubble.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+
+  .npc-dialog-overlay{
+    position:fixed;inset:0;z-index:60;background:rgba(6,8,20,.72);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    animation:npcFadeIn .18s ease;
+  }
+  @keyframes npcFadeIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes npcPopIn{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .npc-dialog{
+    position:relative;width:100%;max-width:520px;
+    background:var(--surface);border:1px solid var(--border-bright);border-radius:var(--radius-l);
+    padding:28px 26px;display:flex;gap:18px;align-items:flex-start;
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    animation:npcPopIn .22s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .npc-dialog-portrait{
+    flex:0 0 auto;width:72px;height:72px;border-radius:50%;font-size:2.1rem;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 30% 30%, var(--surface-3), var(--surface-2));
+    border:2px solid var(--accent);box-shadow:0 0 0 5px var(--accent-dim);
+  }
+  .npc-dialog-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+  .npc-dialog-name{font-family:var(--font-display);font-weight:700;color:var(--accent);letter-spacing:.04em;font-size:.95rem;}
+  .npc-pet-stage{font-size:.78rem;color:var(--text-dim);margin-top:2px;}
+  .npc-pet-bars{display:flex;flex-direction:column;gap:5px;margin:8px 0 2px;}
+  .npc-bar-row{display:flex;align-items:center;gap:8px;}
+  .npc-bar-label{font-size:.68rem;color:var(--text-faint);font-family:var(--font-mono);width:38px;flex:0 0 auto;}
+  .npc-bar-track{flex:1;height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;border:1px solid var(--border);}
+  .npc-bar-fill{height:100%;width:0%;transition:width .3s ease;}
+  .npc-bar-fill.exp{background:linear-gradient(90deg,var(--accent-2),var(--accent));}
+  .npc-bar-fill.hunger{background:linear-gradient(90deg,var(--warn),var(--good));}
+  .npc-dialog-text{color:var(--text);font-size:.95rem;line-height:1.65;white-space:pre-line;}
+  .npc-dialog-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .npc-avatar{position:relative;}
+  .npc-hunger-dot{
+    position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;
+    border:2px solid var(--surface);background:var(--good);
+  }
+  .npc-dialog-close{
+    position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-faint);
+    font-size:1.2rem;padding:4px 8px;border-radius:var(--radius-s);
+  }
+  .npc-dialog-close:hover{color:var(--danger);background:var(--danger-dim);}
+  @media (max-width:640px){
+    .npc{width:54px;height:54px;}
+    .npc-avatar{font-size:1.4rem;}
+    .npc-dialog{flex-direction:column;align-items:center;text-align:center;padding:24px 20px;}
+  }
+
+  footer.foot{text-align:center;color:var(--text-faint);font-size:.75rem;padding:18px 24px 32px;font-family:var(--font-mono);}
+
+  @media (max-width:640px){
+    .console-header{padding:12px 16px;}
+    .viewport{padding:20px 14px 48px;}
+  }
+</style>
+
+<canvas class="starfield" id="starfield" aria-hidden="true"></canvas>
+<div class="toast" id="toast"></div>
+
+<div class="npc" id="npc" title="코스모 — 드래그해서 옮기고, 클릭하면 대화창이 열려요">
+  <div class="npc-bubble" id="npcBubble"></div>
+  <div class="npc-avatar" id="npcAvatar">🤖<span class="npc-hunger-dot" id="npcHungerDot"></span></div>
+</div>
+
+<div class="npc-dialog-overlay" id="npcDialogOverlay" hidden>
+  <div class="npc-dialog">
+    <button class="npc-dialog-close" id="npcDialogClose" title="닫기">×</button>
+    <div class="npc-dialog-portrait" id="npcDialogPortrait">🤖</div>
+    <div class="npc-dialog-body">
+      <div class="npc-dialog-name">코스모</div>
+      <div class="npc-pet-stage" id="npcPetStage"></div>
+      <div class="npc-pet-bars">
+        <div class="npc-bar-row"><span class="npc-bar-label">EXP</span><div class="npc-bar-track"><div class="npc-bar-fill exp" id="npcExpFill"></div></div></div>
+        <div class="npc-bar-row"><span class="npc-bar-label">포만감</span><div class="npc-bar-track"><div class="npc-bar-fill hunger" id="npcHungerFill"></div></div></div>
+      </div>
+      <div class="npc-dialog-text" id="npcDialogText"></div>
+      <div class="npc-dialog-actions" id="npcDialogActions">
+        <button class="btn" id="npcFeedBtn">🍪 먹이 주기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appRoot">
+  <header class="console-header">
+    <div class="brand">
+      <span class="brand-icon">🛰</span>
+      <div class="brand-text">
+        <span class="brand-name">SPACE CRAFT</span>
+        <span class="brand-sub">메타인지 미션 컨트롤</span>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button class="tab active" data-tab="draftlist" role="tab" aria-selected="true">My project</button>
+      <button class="tab" data-tab="mindmap" role="tab" aria-selected="false">마인드맵</button>
+      <button class="tab" data-tab="draft" role="tab" aria-selected="false">대본 편집</button>
+    </nav>
+  </header>
+
+  <main class="viewport">
+
+    <!-- MIND MAP -->
+    <section class="panel" id="panel-mindmap" data-panel hidden>
+      <div class="card" id="mm-card" style="gap:16px;display:flex;flex-direction:column;">
+        <div>
+          <span class="eyebrow">STAR CHART</span>
+          <h2 style="margin-top:6px;font-size:1.25rem;">마인드맵</h2>
+          <div class="hint" id="mm-current-draft-label" style="margin-top:4px;"></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn primary" id="mm-add">+ 새 가지 추가</button>
+          <button class="btn" id="mm-undo" title="실행취소 (Ctrl+Z)">↶</button>
+          <button class="btn" id="mm-redo" title="다시 실행 (Ctrl+Shift+Z)">↷</button>
+          <button class="btn danger-ghost" id="mm-reset">초기화</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="mm-zoom-out" title="축소">－</button>
+          <span class="hint" id="mm-zoom-level" style="min-width:40px;text-align:center;">100%</span>
+          <button class="btn" id="mm-zoom-in" title="확대">＋</button>
+          <button class="btn" id="mm-zoom-fit">🔍 전체 보기</button>
+          <button class="btn" id="mm-fullscreen">⛶ 화면 확대</button>
+        </div>
+        <div class="mm-body">
+          <div class="mm-outline" id="mm-outline">
+            <div class="mm-outline-title">노드 목록</div>
+            <div class="mm-outline-tree" id="mm-outline-tree"></div>
+          </div>
+          <div class="mindmap-canvas" id="mm-canvas">
+            <div class="mm-world" id="mm-world">
+              <svg id="mm-svg"></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mm-script-panel" id="mm-script-panel" hidden>
+        <div class="mm-script-head">
+          <div>
+            <span class="eyebrow">NODE MEMO</span>
+            <h3 id="mm-script-title" style="margin-top:4px;font-size:1.05rem;">-</h3>
+          </div>
+          <button class="mm-script-close" id="mm-script-close" title="닫기">×</button>
+        </div>
+        <div>
+          <span class="mm-script-label">메모</span>
+          <textarea class="mm-script-textarea" id="mm-script-textarea" placeholder="이 노드에 대한 메모를 자유롭게 적어보세요."></textarea>
+        </div>
+        <button class="btn primary" id="mm-script-submit" style="align-self:flex-start;">AI에게 메모 봐달라고 하기</button>
+        <div class="mm-script-result" id="mm-script-result" hidden></div>
+      </div>
+    </section>
+
+    <!-- DRAFT EDITOR -->
+    <section class="panel" id="panel-draft" data-panel hidden>
+      <div class="card" id="draft-editor-empty" style="gap:10px;display:flex;flex-direction:column;">
+        <div>
+          <span class="eyebrow">SCRIPT EDITOR</span>
+          <h2 style="margin-top:6px;font-size:1.25rem;">대본 편집</h2>
+        </div>
+        <p class="hint">Project list에서 대본을 선택하거나 새로 만들어주세요.</p>
+      </div>
+      <div class="card" id="draft-editor-body" style="gap:16px;display:flex;flex-direction:column;" hidden>
+        <div>
+          <span class="eyebrow">SCRIPT EDITOR</span>
+          <input type="text" class="draft-title-input" id="draft-title-input" placeholder="대본 제목" maxlength="60">
+        </div>
+
+        <div class="draft-layout">
+          <div class="draft-main">
+            <div class="draft-picker-box">
+              <div>
+                <span class="eyebrow">NODE MEMOS</span>
+                <h3 style="margin-top:4px;font-size:1rem;">노드에서 메모 가져오기</h3>
+              </div>
+              <div class="draft-picker">
+                <div class="draft-picker-list" id="draft-picker-list"></div>
+                <div class="draft-picker-preview" id="draft-picker-preview"></div>
+              </div>
+            </div>
+
+            <textarea class="draft-textarea" id="draft-textarea" placeholder="여기에 발표 대본을 이어서 써보세요."></textarea>
+            <button class="btn primary" id="draft-submit" style="align-self:flex-start;">AI에게 대본 봐달라고 하기</button>
+          </div>
+
+          <div class="draft-feedback">
+            <span class="eyebrow">AI FEEDBACK</span>
+            <h3 style="margin-top:4px;font-size:1rem;">AI 피드백</h3>
+            <div class="draft-feedback-body" id="draft-result"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DRAFT LIST -->
+    <section class="panel" id="panel-draftlist" data-panel>
+      <div class="card" style="gap:16px;display:flex;flex-direction:column;">
+        <div>
+          <span class="eyebrow">SCRIPT LIBRARY</span>
+          <h2 style="margin-top:6px;font-size:1.25rem;">Project list</h2>
+        </div>
+        <div class="toolbar">
+          <button class="btn primary" id="draftlist-new">+ New project</button>
+        </div>
+        <div class="toolbar draftlist-toolbar">
+          <div class="draftlist-search">
+            <span class="draftlist-search-icon">🔍</span>
+            <input type="text" class="draftlist-search-input" id="draftlist-search-input" placeholder="이름으로 검색">
+          </div>
+          <div class="draftlist-sort" id="draftlist-sort">
+            <button class="btn draftlist-sort-btn" data-sort="newest">최신순</button>
+            <button class="btn draftlist-sort-btn" data-sort="relevance">정확도순</button>
+            <button class="btn draftlist-sort-btn" data-sort="oldest">과거순</button>
+          </div>
+        </div>
+        <div class="draftlist-items" id="draftlist-items"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">SIGNAL LOG · 이 브라우저에 자동 저장됩니다 · 다른 기기와는 공유되지 않아요</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- starfield ---------------- */
+  (function(){
+    var canvas = document.getElementById('starfield');
+    var ctx = canvas.getContext('2d');
+    function draw(){
+      var w = canvas.width = window.innerWidth;
+      var h = canvas.height = window.innerHeight;
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = '#0A0D1C';
+      ctx.fillRect(0,0,w,h);
+      var seed = 42;
+      function rand(){ seed = (seed*9301+49297)%233280; return seed/233280; }
+      var count = Math.floor((w*h)/9000);
+      for(var i=0;i<count;i++){
+        var x = rand()*w, y = rand()*h, r = rand()*1.3+0.2;
+        var b = rand();
+        ctx.beginPath();
+        ctx.arc(x,y,r,0,Math.PI*2);
+        ctx.fillStyle = b>0.85 ? 'rgba(197,214,255,0.9)' : 'rgba(140,150,196,0.55)';
+        ctx.fill();
+      }
+    }
+    draw();
+    var t;
+    window.addEventListener('resize', function(){ clearTimeout(t); t=setTimeout(draw,150); });
+  })();
+
+  /* ---------------- state ---------------- */
+  var STORE_KEY = 'space-craft-state-v1';
+
+  function makeDefaultMindmap(){
+    return {
+      theme: 'aurora',
+      view: { panX: 0, panY: 0, zoom: 1 },
+      collapsedIds: {},
+      nodes: [
+        {id:'n0', x:50, y:50, text:'클릭하여 시작', core:true}
+      ],
+      edges: []
+    };
+  }
+
+  function makeDraft(title){
+    return {
+      id: 'd' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      title: title,
+      text: '',
+      createdAt: Date.now(),
+      mindmap: makeDefaultMindmap()
+    };
+  }
+
+  function makeProject(name){
+    var draft = makeDraft('New project 1');
+    return {
+      id: 'p' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      name: name,
+      drafts: [draft],
+      currentDraftId: draft.id
+    };
+  }
+
+  function seedState(){
+    var project = makeProject('프로젝트 1');
+    return {
+      projects: [project],
+      currentProjectId: project.id,
+      pet: { exp: 0, hunger: 100, lastSeen: Date.now() }
+    };
+  }
+
+  var state;
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    state = raw ? JSON.parse(raw) : seedState();
+  }catch(e){ state = seedState(); }
+  if(!state.pet){ state.pet = { exp: 0, hunger: 100, lastSeen: Date.now() }; }
+
+  /* ---- legacy migration: very old single `state.draft` -> top-level `state.drafts` ---- */
+  if(state.draft && typeof state.draft.text === 'string' && state.draft.text.trim()){
+    if(!state.drafts) state.drafts = [];
+    state.drafts.unshift({ id: 'd' + Date.now(), title: 'New project 1', text: state.draft.text });
+  }
+  delete state.draft;
+
+  /* ---- legacy migration: top-level `state.mindmap`/`state.drafts` -> a project ---- */
+  if(!state.projects) state.projects = [];
+  if(state.mindmap || state.drafts){
+    var legacyProject = {
+      id: 'p' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      name: '프로젝트 1',
+      mindmap: state.mindmap || makeDefaultMindmap(),
+      drafts: state.drafts || [],
+      currentDraftId: (state.currentDraftId != null ? state.currentDraftId : null)
+    };
+    state.projects.unshift(legacyProject);
+    state.currentProjectId = legacyProject.id;
+    delete state.mindmap;
+    delete state.drafts;
+    delete state.currentDraftId;
+  }
+
+  if(!state.projects.length) state.projects.push(makeProject('프로젝트 1'));
+  if(!state.currentProjectId || !state.projects.some(function(p){ return p.id === state.currentProjectId; })){
+    state.currentProjectId = state.projects[0].id;
+  }
+
+  function currentProject(){
+    return state.projects.find(function(p){ return p.id === state.currentProjectId; }) || state.projects[0];
+  }
+
+  /* ---- migration: mindmap moves from project-level to per-draft, plus field defaults ---- */
+  state.projects.forEach(function(p){
+    if(!p.drafts) p.drafts = [];
+
+    if(p.mindmap){
+      if(!p.drafts.length){
+        p.drafts.push({ id: 'd' + Date.now() + '-' + Math.floor(Math.random() * 1000), title: 'New project 1', text: '', mindmap: p.mindmap });
+      } else {
+        p.drafts.forEach(function(d){
+          if(!d.mindmap) d.mindmap = JSON.parse(JSON.stringify(p.mindmap));
+        });
+      }
+      delete p.mindmap;
+    }
+
+    if(!p.drafts.length) p.drafts.push(makeDraft('New project 1'));
+
+    p.drafts.forEach(function(d, idx){
+      if(!d.mindmap) d.mindmap = makeDefaultMindmap();
+      if(!d.mindmap.theme) d.mindmap.theme = 'aurora';
+      if(!d.mindmap.view) d.mindmap.view = { panX: 0, panY: 0, zoom: 1 };
+      if(!d.mindmap.collapsedIds) d.mindmap.collapsedIds = {};
+      if(typeof d.text !== 'string') d.text = '';
+      if(typeof d.title !== 'string') d.title = '대본';
+      if(typeof d.createdAt !== 'number'){
+        var parsed = parseInt(String(d.id || '').replace(/^d/, ''), 10);
+        d.createdAt = isNaN(parsed) ? (Date.now() + idx) : parsed;
+      }
+    });
+
+    if(p.currentDraftId == null || !p.drafts.some(function(d){ return d.id === p.currentDraftId; })){
+      p.currentDraftId = p.drafts[0].id;
+    }
+  });
+
+  function save(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  /* ---------------- toast ---------------- */
+  var toastEl = document.getElementById('toast');
+  var toastTimer;
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+  }
+
+  /* ---------------- npc companion ---------------- */
+  var npcEl = document.getElementById('npc');
+  var npcAvatarEl = document.getElementById('npcAvatar');
+  var npcHungerDot = document.getElementById('npcHungerDot');
+  var npcBubbleEl = document.getElementById('npcBubble');
+  var npcOverlay = document.getElementById('npcDialogOverlay');
+  var npcDialogPortrait = document.getElementById('npcDialogPortrait');
+  var npcPetStageEl = document.getElementById('npcPetStage');
+  var npcExpFill = document.getElementById('npcExpFill');
+  var npcHungerFill = document.getElementById('npcHungerFill');
+  var npcDialogText = document.getElementById('npcDialogText');
+  var npcDialogClose = document.getElementById('npcDialogClose');
+  var npcFeedBtn = document.getElementById('npcFeedBtn');
+
+  /* ---- tamagotchi-style pet ---- */
+  var PET_STAGES = [
+    {min:0,   emoji:'🥚', name:'알'},
+    {min:10,  emoji:'🐣', name:'아기 코스모'},
+    {min:30,  emoji:'🐥', name:'꼬마 코스모'},
+    {min:70,  emoji:'🤖', name:'코스모'},
+    {min:150, emoji:'🛸', name:'베테랑 코스모'},
+    {min:300, emoji:'🌟', name:'마스터 코스모'}
+  ];
+  var HUNGER_DECAY_PER_HOUR = 100 / 24; // empty over ~24h without a visit
+  var lastKnownStageIdx = -1;
+
+  function petStageInfo(){
+    var exp = state.pet.exp || 0;
+    var idx = 0;
+    for(var i=0;i<PET_STAGES.length;i++){ if(exp >= PET_STAGES[i].min) idx = i; }
+    var cur = PET_STAGES[idx];
+    var next = PET_STAGES[idx+1];
+    var pct = next ? Math.round(((exp - cur.min) / (next.min - cur.min)) * 100) : 100;
+    return { idx:idx, stage:cur, next:next, pct:Math.max(0,Math.min(100,pct)) };
+  }
+  function petMood(){
+    var h = state.pet.hunger;
+    if(h >= 60) return 'happy';
+    if(h >= 30) return 'neutral';
+    return 'lonely';
+  }
+  function applyPetDecay(){
+    var now = Date.now();
+    var elapsedMs = now - (state.pet.lastSeen || now);
+    if(elapsedMs > 0){
+      var hours = elapsedMs / 3600000;
+      state.pet.hunger = Math.max(0, Math.min(100, state.pet.hunger - hours * HUNGER_DECAY_PER_HOUR));
+    }
+    state.pet.lastSeen = now;
+  }
+  function feedPet(){
+    state.pet.hunger = Math.min(100, state.pet.hunger + 15);
+    state.pet.lastSeen = Date.now();
+    save();
+    refreshPetUI();
+    npcSay('냠냠! 고마워요, 든든해졌어요 🍪');
+  }
+  function refreshPetUI(){
+    var info = petStageInfo();
+    lastKnownStageIdx = info.idx;
+    npcAvatarEl.textContent = info.stage.emoji;
+    npcAvatarEl.appendChild(npcHungerDot);
+    npcDialogPortrait.textContent = info.stage.emoji;
+    var moodLabel = {happy:'행복해요', neutral:'그럭저럭이에요', lonely:'심심하고 배고파요'}[petMood()];
+    npcPetStageEl.textContent = 'Lv.'+info.idx+' · '+info.stage.name+' · '+moodLabel;
+    npcExpFill.style.width = info.pct + '%';
+    npcHungerFill.style.width = Math.round(state.pet.hunger) + '%';
+    npcHungerDot.style.background = petMood()==='happy' ? 'var(--good)' : (petMood()==='neutral' ? 'var(--warn)' : 'var(--danger)');
+  }
+
+  if(!state.npc){
+    state.npc = { x: Math.max(16, window.innerWidth - 96), y: Math.max(16, window.innerHeight - 140) };
+  }
+  function npcClamp(){
+    state.npc.x = Math.max(8, Math.min(window.innerWidth - 72, state.npc.x));
+    state.npc.y = Math.max(8, Math.min(window.innerHeight - 72, state.npc.y));
+  }
+  function npcPlace(){
+    npcEl.style.left = state.npc.x + 'px';
+    npcEl.style.top = state.npc.y + 'px';
+  }
+  npcClamp();
+  npcPlace();
+  window.addEventListener('resize', function(){ npcClamp(); npcPlace(); });
+
+  var npcDrag = null;
+  var NPC_DRAG_THRESHOLD = 5;
+  npcEl.addEventListener('pointerdown', function(ev){
+    npcDrag = { startX: ev.clientX, startY: ev.clientY, origX: state.npc.x, origY: state.npc.y, moved:false };
+    npcEl.setPointerCapture(ev.pointerId);
+  });
+  npcEl.addEventListener('pointermove', function(ev){
+    if(!npcDrag) return;
+    var dx = ev.clientX - npcDrag.startX, dy = ev.clientY - npcDrag.startY;
+    if(!npcDrag.moved && Math.hypot(dx,dy) > NPC_DRAG_THRESHOLD){
+      npcDrag.moved = true;
+      npcEl.classList.add('dragging');
+    }
+    if(npcDrag.moved){
+      state.npc.x = npcDrag.origX + dx;
+      state.npc.y = npcDrag.origY + dy;
+      npcClamp();
+      npcPlace();
+    }
+  });
+  npcEl.addEventListener('pointerup', function(){
+    if(!npcDrag) return;
+    var wasDrag = npcDrag.moved;
+    npcEl.classList.remove('dragging');
+    npcDrag = null;
+    if(wasDrag){ save(); }
+    else { npcOpenDialog(); }
+  });
+
+  var npcBubbleTimer;
+  function npcSay(msg){
+    npcBubbleEl.textContent = msg;
+    npcBubbleEl.classList.add('show');
+    clearTimeout(npcBubbleTimer);
+    npcBubbleTimer = setTimeout(function(){ npcBubbleEl.classList.remove('show'); }, 3400);
+  }
+
+  var NPC_GREETINGS = {
+    happy: [
+      '오늘도 미션 컨트롤에 오신 걸 환영해요! 뭐부터 정리해볼까요?',
+      '맥락을 만드는 건 시간이 걸려요. 천천히, 하나씩 해봐요.',
+      '막히는 부분이 있으면 마인드맵에 일단 적어보는 것도 방법이에요.',
+      '체크리스트를 다 채우는 것보다, 스스로 설명해보는 게 진짜 복습이에요.'
+    ],
+    neutral: [
+      '오랜만이에요! 저 배고파지고 있어요, 먹이 좀 줄래요?',
+      '할 일을 하나씩 끝낼 때마다 저도 같이 자라요.'
+    ],
+    lonely: [
+      '한참 안 오셨네요... 심심하고 배고파요 😢',
+      '저 좀 챙겨주세요! 먹이도 주고, 할 일도 하나 끝내볼까요?'
+    ]
+  };
+  function npcOpenDialog(line){
+    applyPetDecay(); save(); refreshPetUI();
+    if(!line){
+      var lines = NPC_GREETINGS[petMood()];
+      line = lines[Math.floor(Math.random()*lines.length)];
+    }
+    npcDialogText.textContent = line;
+    npcOverlay.hidden = false;
+  }
+  function npcCloseDialog(){ npcOverlay.hidden = true; }
+  npcDialogClose.addEventListener('click', npcCloseDialog);
+  npcOverlay.addEventListener('click', function(ev){ if(ev.target === npcOverlay) npcCloseDialog(); });
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && !npcOverlay.hidden) npcCloseDialog(); });
+
+  npcFeedBtn.addEventListener('click', function(){ feedPet(); refreshPetUI(); });
+
+  applyPetDecay(); save(); refreshPetUI();
+  setInterval(function(){ applyPetDecay(); save(); refreshPetUI(); }, 5*60*1000);
+
+  setTimeout(function(){
+    var lines = NPC_GREETINGS[petMood()];
+    npcSay(petMood()==='lonely' ? lines[0] : '안녕하세요! 저는 코스모예요. 옆에서 도와줄게요 🛰');
+  }, 900);
+
+  /* ---------------- tabs ---------------- */
+  var tabs = document.querySelectorAll('.tab');
+  var panels = document.querySelectorAll('[data-panel]');
+  var NPC_TAB_LINES = {
+    mindmap: '여기서는 배운 걸 노드로 흩뿌리고 선으로 이어보세요. 정답은 없어요.',
+    draft: '여기서는 마인드맵에 적어둔 메모를 모아 하나의 발표 대본으로 다듬어보세요.',
+    draftlist: '여기서 대본을 여러 개 만들고 관리할 수 있어요.'
+  };
+  function goTo(name){
+    tabs.forEach(function(t){
+      var on = t.dataset.tab === name;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    panels.forEach(function(p){ p.hidden = p.id !== ('panel-'+name); });
+    if(name === 'mindmap') renderMindmap();
+    if(name === 'draft') renderDraftPanel();
+    if(name === 'draftlist') renderDraftList();
+    if(NPC_TAB_LINES[name]) npcSay(NPC_TAB_LINES[name]);
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ goTo(t.dataset.tab); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(b){
+    b.addEventListener('click', function(){ goTo(b.dataset.goto); });
+  });
+
+  /* ---------------- mind map ---------------- */
+  var MM_THEMES = {
+    aurora: { label:'오로라', core:'#55E6C1', colors:['#55E6C1','#C084FC','#6EE7A8','#FFB454','#FB7185','#7DD3FC'] },
+    sunset: { label:'선셋',   core:'#FDBA74', colors:['#FB7185','#F472B6','#FDBA74','#FCD34D','#F97316','#FCA5A5'] },
+    ocean:  { label:'오션',   core:'#38BDF8', colors:['#38BDF8','#22D3EE','#818CF8','#34D399','#60A5FA','#A5F3FC'] },
+    mono:   { label:'모노',   core:'#E7EBFB', colors:['#C7CCEE','#AAB2DA','#8C96C4','#6B74A8','#9AA3D6','#5C6494'] }
+  };
+  var MM_WORLD_W = 1600;
+  var MM_WORLD_H = 900;
+  var MM_ZOOM_MIN = 0.15;
+  var MM_ZOOM_MAX = 2.2;
+  var mmCanvas = document.getElementById('mm-canvas');
+  var mmWorld = document.getElementById('mm-world');
+  var mmSvg = document.getElementById('mm-svg');
+  var mmZoomLevelEl = document.getElementById('mm-zoom-level');
+  var dragState = null;
+  var panState = null;
+  var mmSelectedId = null;
+  function updateSelectionHighlight(){
+    mmWorld.querySelectorAll('.node').forEach(function(n){
+      n.classList.toggle('picked', n.dataset.id === mmSelectedId);
+    });
+  }
+  var mmViewFitted = false;
+
+  /* ---- presentation script panel ---- */
+  var mmScriptNodeId = null;
+  var scriptPanelEl = document.getElementById('mm-script-panel');
+  var scriptTitleEl = document.getElementById('mm-script-title');
+  var scriptTextareaEl = document.getElementById('mm-script-textarea');
+  var scriptResultEl = document.getElementById('mm-script-result');
+  var scriptSubmitBtn = document.getElementById('mm-script-submit');
+  var scriptCloseBtn = document.getElementById('mm-script-close');
+
+  function openScriptPanel(nodeId){
+    var node = currentDraft().mindmap.nodes.find(function(n){ return n.id === nodeId; });
+    if(!node) return;
+    mmScriptNodeId = nodeId;
+    scriptTitleEl.textContent = node.text;
+    scriptTextareaEl.value = node.script || '';
+    scriptResultEl.hidden = true;
+    scriptResultEl.textContent = '';
+    scriptPanelEl.hidden = false;
+  }
+  function closeScriptPanel(){
+    scriptPanelEl.hidden = true;
+    mmScriptNodeId = null;
+  }
+  scriptCloseBtn.addEventListener('click', closeScriptPanel);
+  scriptTextareaEl.addEventListener('input', function(){
+    if(!mmScriptNodeId) return;
+    var node = currentDraft().mindmap.nodes.find(function(n){ return n.id === mmScriptNodeId; });
+    if(!node) return;
+    node.script = scriptTextareaEl.value;
+    save();
+  });
+  scriptSubmitBtn.addEventListener('click', function(){
+    scriptResultEl.hidden = false;
+    scriptResultEl.textContent = '여기에 AI 판독 결과가 표시됩니다 (준비 중)';
+  });
+
+  /* ---- draft scripts (multiple) ---- */
+  var draftEmptyCard = document.getElementById('draft-editor-empty');
+  var draftBodyCard = document.getElementById('draft-editor-body');
+  var draftTitleInput = document.getElementById('draft-title-input');
+  var draftTextareaEl = document.getElementById('draft-textarea');
+  var draftResultEl = document.getElementById('draft-result');
+  var draftSubmitBtn = document.getElementById('draft-submit');
+  var draftListItemsEl = document.getElementById('draftlist-items');
+  var draftListNewBtn = document.getElementById('draftlist-new');
+  var draftSearchInputEl = document.getElementById('draftlist-search-input');
+  var draftSortButtonsEl = document.getElementById('draftlist-sort');
+  var draftSortMode = 'custom';
+  var draftSearchQuery = '';
+  var draftDragSrcId = null;
+  var draftPickerListEl = document.getElementById('draft-picker-list');
+  var draftPickerPreviewEl = document.getElementById('draft-picker-preview');
+  var draftPickerSelectedId = null;
+
+  function currentDraft(){
+    return currentProject().drafts.find(function(d){ return d.id === currentProject().currentDraftId; }) || null;
+  }
+
+  function renderDraftPickerList(){
+    draftPickerListEl.innerHTML = '';
+    var mm = currentDraft().mindmap;
+    var childrenMap = mmBuildChildrenMap(mm);
+    function walk(parentKey, depth){
+      (childrenMap[parentKey] || []).forEach(function(node){
+        var row = document.createElement('div');
+        row.className = 'mm-outline-row' + (draftPickerSelectedId === node.id ? ' active' : '');
+        row.style.paddingLeft = (depth * 14) + 'px';
+        var label = document.createElement('span');
+        label.className = 'mm-outline-label';
+        label.textContent = node.text;
+        row.appendChild(label);
+        row.addEventListener('click', function(){
+          draftPickerSelectedId = node.id;
+          renderDraftPickerList();
+          renderDraftPickerPreview();
+        });
+        draftPickerListEl.appendChild(row);
+        walk(node.id, depth + 1);
+      });
+    }
+    walk('__root__', 0);
+  }
+
+  function renderDraftPickerPreview(){
+    draftPickerPreviewEl.innerHTML = '';
+    var node = draftPickerSelectedId
+      ? currentDraft().mindmap.nodes.find(function(n){ return n.id === draftPickerSelectedId; })
+      : null;
+    if(!node){
+      draftPickerSelectedId = null;
+      var hint = document.createElement('p');
+      hint.className = 'hint';
+      hint.textContent = '왼쪽 목록에서 노드를 선택하면 그 노드의 메모를 볼 수 있어요.';
+      draftPickerPreviewEl.appendChild(hint);
+      return;
+    }
+    var title = document.createElement('div');
+    title.className = 'draftlist-item-title';
+    title.textContent = node.text;
+    draftPickerPreviewEl.appendChild(title);
+
+    var text = (node.script || '').trim();
+    var memo = document.createElement('p');
+    memo.className = 'draft-picker-memo' + (text ? '' : ' empty');
+    memo.textContent = text || '아직 메모가 없어요.';
+    draftPickerPreviewEl.appendChild(memo);
+
+    var addBtn = document.createElement('button');
+    addBtn.className = 'btn primary';
+    addBtn.textContent = '대본에 추가';
+    addBtn.disabled = !text;
+    addBtn.addEventListener('click', function(){
+      if(!text) return;
+      var d = currentDraft();
+      if(!d) return;
+      d.text = (d.text || '') + '## ' + node.text + '\n' + text + '\n\n';
+      draftTextareaEl.value = d.text;
+      save();
+      showToast('"' + node.text + '" 메모를 대본에 추가했어요.');
+    });
+    draftPickerPreviewEl.appendChild(addBtn);
+  }
+
+  function renderDraftPanel(){
+    var d = currentDraft();
+    if(!d){
+      draftEmptyCard.hidden = false;
+      draftBodyCard.hidden = true;
+      return;
+    }
+    draftEmptyCard.hidden = true;
+    draftBodyCard.hidden = false;
+    draftTitleInput.value = d.title || '';
+    draftTextareaEl.value = d.text || '';
+    renderDraftFeedbackMessage('아직 피드백이 없어요. 대본을 작성하고 "AI에게 대본 봐달라고 하기"를 눌러보세요.', 'draft-feedback-empty');
+    renderDraftPickerList();
+    renderDraftPickerPreview();
+  }
+
+  function renderDraftFeedbackMessage(text, cls){
+    draftResultEl.innerHTML = '';
+    var p = document.createElement('p');
+    if(cls) p.className = cls;
+    p.textContent = text;
+    draftResultEl.appendChild(p);
+  }
+
+  function renderDraftFeedbackText(text){
+    draftResultEl.innerHTML = '';
+    var paragraphs = String(text || '').split(/\n\s*\n/);
+    paragraphs.forEach(function(seg){
+      var t = seg.trim();
+      if(!t) return;
+      var p = document.createElement('p');
+      p.textContent = t;
+      draftResultEl.appendChild(p);
+    });
+    if(!draftResultEl.children.length){
+      renderDraftFeedbackMessage('받아온 내용이 비어있어요.', 'draft-feedback-empty');
+    }
+  }
+
+  draftTitleInput.addEventListener('input', function(){
+    var d = currentDraft();
+    if(!d) return;
+    d.title = draftTitleInput.value;
+    save();
+  });
+
+  draftTextareaEl.addEventListener('input', function(){
+    var d = currentDraft();
+    if(!d) return;
+    d.text = draftTextareaEl.value;
+    save();
+  });
+
+  draftSubmitBtn.addEventListener('click', function(){
+    var d = currentDraft();
+    if(!d) return;
+    var scriptText = (draftTextareaEl.value || '').trim();
+    if(!scriptText){
+      renderDraftFeedbackMessage('먼저 대본을 작성해주세요.', 'draft-feedback-empty');
+      return;
+    }
+
+    draftSubmitBtn.disabled = true;
+    renderDraftFeedbackMessage('읽는 중...', 'draft-feedback-loading');
+
+    var prompt = "다음은 학생이 발표를 위해 쓴 대본이야. 학생이 발표 준비를 더 잘할 수 있도록 도와주는 피드백을 해줘. 대본을 대신 고쳐주지 말고, 학생이 스스로 다듬을 수 있게 조언과 질문 위주로 답해줘.\n\n대본:\n" + scriptText;
+
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        var out = (data.content || [])
+          .filter(function(block){ return block && block.type === 'text'; })
+          .map(function(block){ return block.text; })
+          .join('');
+        renderDraftFeedbackText(out);
+      })
+      .catch(function(){
+        renderDraftFeedbackMessage('피드백을 받아오지 못했어요. 잠시 후 다시 시도해주세요.', 'draft-feedback-error');
+      })
+      .then(function(){
+        draftSubmitBtn.disabled = false;
+      });
+  });
+
+  function draftPreviewText(text){
+    var t = (text || '').trim();
+    if(!t) return '(내용 없음)';
+    return t.length > 140 ? t.slice(0, 140) + '…' : t;
+  }
+
+  function draftRelevanceScore(title, query){
+    var t = (title || '').toLowerCase();
+    var idx = t.indexOf(query);
+    if(idx === -1) return -1;
+    var score = 100 - idx;
+    if(t === query) score += 200;
+    else if(idx === 0) score += 100;
+    return score;
+  }
+
+  function renderDraftList(){
+    draftListItemsEl.innerHTML = '';
+
+    draftSortButtonsEl.querySelectorAll('.draftlist-sort-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.sort === draftSortMode);
+    });
+
+    var query = draftSearchQuery.trim().toLowerCase();
+    var list = currentProject().drafts.slice();
+
+    if(query){
+      list = list.filter(function(d){ return (d.title || '').toLowerCase().indexOf(query) !== -1; });
+    }
+
+    if(draftSortMode === 'newest'){
+      list.sort(function(a,b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+    } else if(draftSortMode === 'oldest'){
+      list.sort(function(a,b){ return (a.createdAt || 0) - (b.createdAt || 0); });
+    } else if(draftSortMode === 'relevance' && query){
+      list.sort(function(a,b){ return draftRelevanceScore(b.title, query) - draftRelevanceScore(a.title, query); });
+    }
+
+    if(!list.length){
+      var empty = document.createElement('p');
+      empty.className = 'draftlist-empty';
+      empty.textContent = query ? '검색 결과가 없어요.' : '아직 저장된 대본이 없어요. 새 대본을 만들어보세요.';
+      draftListItemsEl.appendChild(empty);
+      return;
+    }
+
+    var dragEnabled = (draftSortMode === 'custom' && !query);
+
+    list.forEach(function(d){
+      var row = document.createElement('div');
+      row.className = 'draftlist-item';
+      row.draggable = dragEnabled;
+
+      var handle = document.createElement('span');
+      handle.className = 'draftlist-item-handle' + (dragEnabled ? '' : ' disabled');
+      handle.textContent = '⠿';
+      handle.title = dragEnabled ? '드래그해서 순서 바꾸기' : '정렬·검색이 적용 중일 때는 순서를 바꿀 수 없어요';
+
+      var body = document.createElement('div');
+      body.className = 'draftlist-item-body';
+      var title = document.createElement('div');
+      title.className = 'draftlist-item-title';
+      title.textContent = d.title || '(제목 없음)';
+      var preview = document.createElement('div');
+      preview.className = 'draftlist-item-preview';
+      preview.textContent = draftPreviewText(d.text);
+      body.appendChild(title);
+      body.appendChild(preview);
+
+      var rm = document.createElement('button');
+      rm.className = 'draftlist-item-rm';
+      rm.textContent = '×';
+      rm.title = '대본 삭제';
+      rm.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if(currentProject().drafts.length <= 1){
+          showToast('마지막 남은 대본은 삭제할 수 없어요.');
+          return;
+        }
+        if(!confirm('"' + (d.title || '제목 없음') + '" 대본을 삭제할까요? (그 대본의 마인드맵도 함께 삭제돼요)')) return;
+        currentProject().drafts = currentProject().drafts.filter(function(x){ return x.id !== d.id; });
+        if(currentProject().currentDraftId === d.id){
+          currentProject().currentDraftId = currentProject().drafts.length ? currentProject().drafts[0].id : null;
+        }
+        save();
+        renderDraftList();
+      });
+
+      row.addEventListener('click', function(){
+        currentProject().currentDraftId = d.id;
+        save();
+        mmViewFitted = false;
+        mmHistory = [];
+        mmFuture = [];
+        mmUpdateUndoRedoButtons();
+        goTo('mindmap');
+      });
+
+      if(dragEnabled){
+        row.addEventListener('dragstart', function(ev){
+          draftDragSrcId = d.id;
+          row.classList.add('dragging');
+          ev.dataTransfer.effectAllowed = 'move';
+          try{ ev.dataTransfer.setData('text/plain', d.id); }catch(e){}
+        });
+        row.addEventListener('dragend', function(){
+          row.classList.remove('dragging');
+          draftDragSrcId = null;
+        });
+        row.addEventListener('dragover', function(ev){
+          ev.preventDefault();
+          ev.dataTransfer.dropEffect = 'move';
+        });
+        row.addEventListener('drop', function(ev){
+          ev.preventDefault();
+          if(draftDragSrcId == null || draftDragSrcId === d.id) return;
+          var arr = currentProject().drafts;
+          var srcIndex = arr.findIndex(function(x){ return x.id === draftDragSrcId; });
+          var targetIndex = arr.findIndex(function(x){ return x.id === d.id; });
+          if(srcIndex === -1 || targetIndex === -1) return;
+          var moved = arr.splice(srcIndex, 1)[0];
+          arr.splice(targetIndex, 0, moved);
+          save();
+          renderDraftList();
+        });
+      }
+
+      row.appendChild(handle);
+      row.appendChild(body);
+      row.appendChild(rm);
+      draftListItemsEl.appendChild(row);
+    });
+  }
+
+  draftSearchInputEl.addEventListener('input', function(){
+    draftSearchQuery = draftSearchInputEl.value;
+    renderDraftList();
+  });
+
+  draftSortButtonsEl.querySelectorAll('.draftlist-sort-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      draftSortMode = (draftSortMode === b.dataset.sort) ? 'custom' : b.dataset.sort;
+      renderDraftList();
+    });
+  });
+
+  draftListNewBtn.addEventListener('click', function(){
+    var defaultTitle = 'New project ' + (currentProject().drafts.length + 1);
+    var title = prompt('새 대본 제목을 입력하세요', defaultTitle);
+    if(title === null) return;
+    title = title.trim() || defaultTitle;
+    var d = makeDraft(title);
+    currentProject().drafts.push(d);
+    currentProject().currentDraftId = d.id;
+    save();
+    mmViewFitted = false;
+    mmHistory = [];
+    mmFuture = [];
+    mmUpdateUndoRedoButtons();
+    goTo('mindmap');
+  });
+
+  function applyView(){
+    var view = currentDraft().mindmap.view;
+    mmWorld.style.transform = 'translate(' + view.panX + 'px,' + view.panY + 'px) scale(' + view.zoom + ')';
+    if(mmZoomLevelEl) mmZoomLevelEl.textContent = Math.round(view.zoom * 100) + '%';
+  }
+
+  function setZoom(newZoom, centerX, centerY){
+    var view = currentDraft().mindmap.view;
+    newZoom = Math.max(MM_ZOOM_MIN, Math.min(MM_ZOOM_MAX, newZoom));
+    var worldX = (centerX - view.panX) / view.zoom;
+    var worldY = (centerY - view.panY) / view.zoom;
+    view.panX = centerX - worldX * newZoom;
+    view.panY = centerY - worldY * newZoom;
+    view.zoom = newZoom;
+    applyView();
+    save();
+  }
+
+  function fitView(){
+    var mm = currentDraft().mindmap;
+    if(!mm.nodes.length) return;
+    var minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+    mm.nodes.forEach(function(n){
+      var px = n.x/100*MM_WORLD_W, py = n.y/100*MM_WORLD_H;
+      minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+      minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+    });
+    var pad = 90;
+    minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+    var rect = mmCanvas.getBoundingClientRect();
+    var zoom = Math.min(rect.width/(maxX-minX), rect.height/(maxY-minY), 1.4);
+    zoom = Math.max(MM_ZOOM_MIN, zoom);
+    var view = mm.view;
+    view.zoom = zoom;
+    view.panX = rect.width/2 - (minX+maxX)/2*zoom;
+    view.panY = rect.height/2 - (minY+maxY)/2*zoom;
+    applyView();
+    save();
+  }
+
+  mmCanvas.addEventListener('pointerdown', function(ev){
+    if(ev.target !== mmCanvas && ev.target !== mmWorld) return;
+    var view = currentDraft().mindmap.view;
+    panState = { startX: ev.clientX, startY: ev.clientY, origPanX: view.panX, origPanY: view.panY, moved:false };
+    mmCanvas.setPointerCapture(ev.pointerId);
+    mmCanvas.classList.add('panning');
+  });
+  mmCanvas.addEventListener('pointermove', function(ev){
+    if(!panState) return;
+    if(!panState.moved && Math.hypot(ev.clientX - panState.startX, ev.clientY - panState.startY) > 3) panState.moved = true;
+    var view = currentDraft().mindmap.view;
+    view.panX = panState.origPanX + (ev.clientX - panState.startX);
+    view.panY = panState.origPanY + (ev.clientY - panState.startY);
+    applyView();
+  });
+  mmCanvas.addEventListener('pointerup', function(){
+    if(panState){
+      var wasPan = panState.moved;
+      panState = null;
+      mmCanvas.classList.remove('panning');
+      if(wasPan){ save(); }
+      else if(mmSelectedId){ mmSelectedId = null; updateSelectionHighlight(); }
+    }
+  });
+  mmCanvas.addEventListener('wheel', function(ev){
+    ev.preventDefault();
+    var rect = mmCanvas.getBoundingClientRect();
+    var cx = ev.clientX - rect.left, cy = ev.clientY - rect.top;
+    var factor = ev.deltaY < 0 ? 1.12 : 1/1.12;
+    setZoom(currentDraft().mindmap.view.zoom * factor, cx, cy);
+  }, { passive:false });
+
+  document.getElementById('mm-zoom-in').addEventListener('click', function(){
+    var rect = mmCanvas.getBoundingClientRect();
+    setZoom(currentDraft().mindmap.view.zoom * 1.2, rect.width/2, rect.height/2);
+  });
+  document.getElementById('mm-zoom-out').addEventListener('click', function(){
+    var rect = mmCanvas.getBoundingClientRect();
+    setZoom(currentDraft().mindmap.view.zoom / 1.2, rect.width/2, rect.height/2);
+  });
+  document.getElementById('mm-zoom-fit').addEventListener('click', fitView);
+
+  var mmCard = document.getElementById('mm-card');
+  var mmFullscreenBtn = document.getElementById('mm-fullscreen');
+  function isMmFullscreen(){
+    return (document.fullscreenElement || document.webkitFullscreenElement) === mmCard;
+  }
+  mmFullscreenBtn.addEventListener('click', function(){
+    if(!isMmFullscreen()){
+      if(mmCard.requestFullscreen) mmCard.requestFullscreen();
+      else if(mmCard.webkitRequestFullscreen) mmCard.webkitRequestFullscreen();
+    } else {
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  });
+  ['fullscreenchange','webkitfullscreenchange'].forEach(function(evt){
+    document.addEventListener(evt, function(){
+      var full = isMmFullscreen();
+      mmFullscreenBtn.textContent = full ? '⤫ 화면 줄이기' : '⛶ 화면 확대';
+      requestAnimationFrame(function(){ drawEdges(); fitView(); });
+    });
+  });
+
+  var MM_HISTORY_MAX = 50;
+  var mmHistory = [];
+  var mmFuture = [];
+  var mmUndoBtn = document.getElementById('mm-undo');
+  var mmRedoBtn = document.getElementById('mm-redo');
+  function mmUpdateUndoRedoButtons(){
+    mmUndoBtn.disabled = mmHistory.length === 0;
+    mmRedoBtn.disabled = mmFuture.length === 0;
+  }
+  function mmSnapshot(){
+    mmHistory.push(JSON.stringify(currentDraft().mindmap));
+    if(mmHistory.length > MM_HISTORY_MAX) mmHistory.shift();
+    mmFuture = [];
+    mmUpdateUndoRedoButtons();
+  }
+  function mmUndo(){
+    if(!mmHistory.length) return;
+    var prev = mmHistory.pop();
+    mmFuture.push(JSON.stringify(currentDraft().mindmap));
+    currentDraft().mindmap = JSON.parse(prev);
+    save(); renderMindmap();
+    mmUpdateUndoRedoButtons();
+  }
+  function mmRedo(){
+    if(!mmFuture.length) return;
+    var next = mmFuture.pop();
+    mmHistory.push(JSON.stringify(currentDraft().mindmap));
+    currentDraft().mindmap = JSON.parse(next);
+    save(); renderMindmap();
+    mmUpdateUndoRedoButtons();
+  }
+  mmUndoBtn.addEventListener('click', mmUndo);
+  mmRedoBtn.addEventListener('click', mmRedo);
+  mmUpdateUndoRedoButtons();
+  document.addEventListener('keydown', function(ev){
+    if(document.getElementById('panel-mindmap').hidden) return;
+    var ae = document.activeElement;
+    if(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+    if((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z'){
+      ev.preventDefault();
+      if(ev.shiftKey) mmRedo(); else mmUndo();
+      return;
+    }
+    if(!mmSelectedId) return;
+    var mm = currentDraft().mindmap;
+    var node = mm.nodes.find(function(n){ return n.id === mmSelectedId; });
+    if(!node) return;
+    if(ev.key === 'Enter'){
+      ev.preventDefault();
+      var parent = node.parent ? mm.nodes.find(function(n){ return n.id === node.parent; }) : node;
+      var sibling = addChildNode(parent);
+      renderMindmap();
+      focusNodeForEdit(sibling.id);
+    } else if(ev.key === 'Backspace' || ev.key === 'Delete'){
+      ev.preventDefault();
+      deleteNode(node.id);
+      npcSay('노드를 지웠군요. 필요 없어진 거겠죠?');
+    }
+  });
+
+  function deleteNode(id){
+    var mm = currentDraft().mindmap;
+    mmSnapshot();
+    mm.nodes = mm.nodes.filter(function(n){ return n.id !== id; });
+    mm.edges = mm.edges.filter(function(e){ return e.a !== id && e.b !== id; });
+    mm.nodes.forEach(function(n){ if(n.parent === id) n.parent = null; });
+    if(mmSelectedId === id) mmSelectedId = null;
+    if(mmScriptNodeId === id) closeScriptPanel();
+    save(); renderMindmap();
+  }
+
+  function addChildNode(parent){
+    var mm = currentDraft().mindmap;
+    var core = mm.nodes.find(function(n){ return n.core; });
+    var coreX = core ? core.x : 50;
+    var siblingCount = mm.nodes.filter(function(n){ return n.parent === parent.id; }).length;
+    var side;
+    if(parent.core){
+      var leftCount = mm.nodes.filter(function(n){ return n.parent === parent.id && n.x < coreX; }).length;
+      side = leftCount <= (siblingCount - leftCount) ? 'right' : 'left';
+    } else {
+      side = parent.x < coreX ? 'left' : 'right';
+    }
+    var dir = side === 'left' ? -1 : 1;
+    var x = parent.x + dir * 13;
+    var y = parent.y + 11 + siblingCount * 9;
+    var id = 'n' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    var node = { id:id, x:x, y:y, text:'새 노드', parent:parent.id };
+    mmSnapshot();
+    mm.nodes.push(node);
+    mm.edges.push({ a: parent.id, b: id });
+    save();
+    return node;
+  }
+
+  var mmEditingId = null;
+  function focusNodeForEdit(id){
+    var el = mmWorld.querySelector('.node[data-id="' + id + '"]');
+    if(!el) return;
+    el.contentEditable = 'true';
+    el.focus();
+    if(window.getSelection) window.getSelection().selectAllChildren(el);
+    mmEditingId = id;
+    if(mmSelectedId){ mmSelectedId = null; updateSelectionHighlight(); }
+    renderOutline();
+  }
+
+  function focusNodeOnCanvas(id){
+    var node = currentDraft().mindmap.nodes.find(function(n){ return n.id === id; });
+    if(!node) return;
+    var rect = mmCanvas.getBoundingClientRect();
+    var view = currentDraft().mindmap.view;
+    view.zoom = Math.max(view.zoom, 0.9);
+    var px = node.x/100*MM_WORLD_W, py = node.y/100*MM_WORLD_H;
+    view.panX = rect.width/2 - px*view.zoom;
+    view.panY = rect.height/2 - py*view.zoom;
+    applyView(); save();
+    var el = mmWorld.querySelector('.node[data-id="' + id + '"]');
+    if(el){
+      el.classList.add('flash');
+      setTimeout(function(){ el.classList.remove('flash'); }, 900);
+    }
+  }
+
+  function mmBuildChildrenMap(mm){
+    var map = {};
+    mm.nodes.forEach(function(n){
+      var pid = n.parent || '__root__';
+      if(!map[pid]) map[pid] = [];
+      map[pid].push(n);
+    });
+    return map;
+  }
+
+  function renderOutline(){
+    var mm = currentDraft().mindmap;
+    var childrenMap = mmBuildChildrenMap(mm);
+    var treeEl = document.getElementById('mm-outline-tree');
+    if(!treeEl) return;
+    treeEl.innerHTML = '';
+    var aggCache = {};
+    function rankOf(s){ return s === 'unknown' ? 2 : (s === 'fuzzy' ? 1 : 0); }
+    function aggStatus(node){
+      if(aggCache[node.id]) return aggCache[node.id];
+      var own = node.core ? 'known' : (node.understanding || 'unknown');
+      var worst = own;
+      (childrenMap[node.id] || []).forEach(function(k){
+        var ks = aggStatus(k);
+        if(rankOf(ks) > rankOf(worst)) worst = ks;
+      });
+      aggCache[node.id] = worst;
+      return worst;
+    }
+    function dotColor(status){
+      return status === 'known' ? 'var(--good)' : (status === 'fuzzy' ? 'var(--warn)' : 'var(--text-faint)');
+    }
+    function renderList(parentKey, depth){
+      var kids = childrenMap[parentKey] || [];
+      kids.forEach(function(node){
+        var row = document.createElement('div');
+        row.className = 'mm-outline-row' + (mmEditingId === node.id ? ' active' : '');
+        row.style.paddingLeft = (depth * 14) + 'px';
+        var hasKids = (childrenMap[node.id] || []).length > 0;
+        var collapsed = !!mm.collapsedIds[node.id];
+        var caret = document.createElement('span');
+        caret.className = 'mm-outline-caret';
+        caret.textContent = hasKids ? (collapsed ? '▸' : '▾') : '';
+        if(hasKids){
+          caret.addEventListener('click', function(ev){
+            ev.stopPropagation();
+            mm.collapsedIds[node.id] = !collapsed;
+            save(); renderOutline();
+          });
+        }
+        row.appendChild(caret);
+        var dot = document.createElement('span');
+        dot.className = 'mm-outline-dot';
+        dot.style.background = dotColor(aggStatus(node));
+        row.appendChild(dot);
+        var label = document.createElement('span');
+        label.className = 'mm-outline-label';
+        label.textContent = node.text;
+        row.appendChild(label);
+        row.addEventListener('click', function(){ focusNodeOnCanvas(node.id); });
+        treeEl.appendChild(row);
+        if(hasKids && !collapsed) renderList(node.id, depth + 1);
+      });
+    }
+    renderList('__root__', 0);
+  }
+
+  function renderMindmap(){
+    mmWorld.querySelectorAll('.node').forEach(function(n){ n.remove(); });
+    var mm = currentDraft().mindmap;
+    var mmDraftLabelEl = document.getElementById('mm-current-draft-label');
+    if(mmDraftLabelEl) mmDraftLabelEl.textContent = '현재 대본: ' + (currentDraft().title || '(제목 없음)');
+    var theme = MM_THEMES[mm.theme] || MM_THEMES.aurora;
+    var byId = {};
+    mm.nodes.forEach(function(n){ byId[n.id] = n; });
+
+    function depthOf(node){
+      var d = 0, cur = node, guard = 0;
+      while(cur.parent && byId[cur.parent] && guard++ < 50){ d++; cur = byId[cur.parent]; }
+      return d;
+    }
+    function branchKeyOf(node){
+      if(node.core) return '__core__';
+      var cur = node, guard = 0;
+      while(cur.parent && byId[cur.parent] && guard++ < 50){
+        var p = byId[cur.parent];
+        if(p.core) return cur.id;
+        cur = p;
+      }
+      return cur.id;
+    }
+    var branchColors = {};
+    var nextColorIdx = 0;
+    function colorForNode(node){
+      if(node.core) return theme.core;
+      var key = branchKeyOf(node);
+      if(!(key in branchColors)){
+        branchColors[key] = theme.colors[nextColorIdx % theme.colors.length];
+        nextColorIdx++;
+      }
+      return branchColors[key];
+    }
+
+    mm.nodes.forEach(function(node){
+      var el = document.createElement('div');
+      var und = node.core ? null : (node.understanding || 'unknown');
+      var undClass = und === 'fuzzy' ? ' und-fuzzy' : (und === 'unknown' ? ' und-unknown' : '');
+      el.className = 'node' + (node.core ? ' core' : '') + undClass;
+      el.style.left = (node.x/100*MM_WORLD_W) + 'px';
+      el.style.top = (node.y/100*MM_WORLD_H) + 'px';
+      el.style.setProperty('--node-color', colorForNode(node));
+      if(!node.core) el.style.fontSize = Math.max(0.72, 0.9 - depthOf(node) * 0.06) + 'rem';
+      el.dataset.id = node.id;
+      el.textContent = node.text;
+
+      var del = document.createElement('span');
+      del.className = 'node-delete';
+      del.textContent = '×';
+      del.title = '노드 삭제';
+      del.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        deleteNode(node.id);
+        npcSay('노드를 지웠군요. 필요 없어진 거겠죠?');
+      });
+      el.appendChild(del);
+
+      var addBtn = document.createElement('span');
+      addBtn.className = 'node-addchild';
+      addBtn.textContent = '+';
+      addBtn.title = '하위 노드 추가 (편집 중 Tab)';
+      addBtn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var child = addChildNode(node);
+        renderMindmap();
+        focusNodeForEdit(child.id);
+        npcSay('가지를 뻗었네요! 바로 이름을 적어보세요.');
+      });
+      el.appendChild(addBtn);
+
+      el.addEventListener('pointerdown', function(ev){
+        if(ev.target === del || ev.target === addBtn) return;
+        var rect = mmCanvas.getBoundingClientRect();
+        dragState = { id:node.id, el:el, rect:rect, snapped:false };
+        el.setPointerCapture(ev.pointerId);
+      });
+      el.addEventListener('pointermove', function(ev){
+        if(!dragState || dragState.id !== node.id) return;
+        if(!dragState.snapped){ mmSnapshot(); dragState.snapped = true; }
+        var rect = dragState.rect;
+        var view = currentDraft().mindmap.view;
+        var worldPxX = (ev.clientX - rect.left - view.panX) / view.zoom;
+        var worldPxY = (ev.clientY - rect.top - view.panY) / view.zoom;
+        var xPct = worldPxX/MM_WORLD_W*100;
+        var yPct = worldPxY/MM_WORLD_H*100;
+        node.x = xPct; node.y = yPct;
+        el.style.left = (xPct/100*MM_WORLD_W)+'px'; el.style.top = (yPct/100*MM_WORLD_H)+'px';
+        drawEdges();
+      });
+      el.addEventListener('pointerup', function(){
+        if(dragState && dragState.id === node.id){
+          var wasDrag = dragState.snapped;
+          dragState = null;
+          if(wasDrag){ save(); }
+          else if(!el.isContentEditable){
+            mmSelectedId = node.id;
+            updateSelectionHighlight();
+            openScriptPanel(node.id);
+          }
+        }
+      });
+
+      function stripControlText(raw){
+        return raw.replace(del.textContent,'').replace(addBtn.textContent,'').trim();
+      }
+      function commitEdit(){
+        if(!el.isContentEditable) return;
+        el.contentEditable = 'false';
+        var newText = (stripControlText(el.textContent) || '이름 없음').slice(0,40);
+        if(newText !== node.text) mmSnapshot();
+        node.text = newText;
+        if(mmEditingId === node.id) mmEditingId = null;
+        save();
+        if(mmScriptNodeId === node.id) scriptTitleEl.textContent = node.text;
+      }
+
+      el.addEventListener('dblclick', function(ev){
+        ev.stopPropagation();
+        focusNodeForEdit(node.id);
+      });
+      el.addEventListener('blur', function(){
+        if(el.isContentEditable){
+          commitEdit();
+          renderMindmap();
+        }
+      });
+      el.addEventListener('keydown', function(ev){
+        if(!el.isContentEditable) return;
+        if(ev.key === 'Enter'){
+          ev.preventDefault();
+          commitEdit();
+          var sibling = addChildNode(node.parent ? byId[node.parent] : node);
+          renderMindmap();
+          focusNodeForEdit(sibling.id);
+        } else if(ev.key === 'Tab'){
+          ev.preventDefault();
+          commitEdit();
+          var child = addChildNode(node);
+          renderMindmap();
+          focusNodeForEdit(child.id);
+        } else if(ev.key === 'Escape'){
+          ev.preventDefault();
+          commitEdit();
+          renderMindmap();
+        }
+      });
+
+      mmWorld.appendChild(el);
+    });
+    drawEdges();
+    applyView();
+    renderOutline();
+    if(!mmViewFitted){ mmViewFitted = true; fitView(); }
+  }
+
+  function drawEdges(){
+    var mm = currentDraft().mindmap;
+    var byId = {};
+    mm.nodes.forEach(function(n){ byId[n.id] = n; });
+    mmSvg.innerHTML = '';
+    mm.edges.forEach(function(edge){
+      var a = byId[edge.a], b = byId[edge.b];
+      if(!a || !b) return;
+      var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', (a.x/100*MM_WORLD_W));
+      line.setAttribute('y1', (a.y/100*MM_WORLD_H));
+      line.setAttribute('x2', (b.x/100*MM_WORLD_W));
+      line.setAttribute('y2', (b.y/100*MM_WORLD_H));
+      line.setAttribute('stroke', '#46508C');
+      line.setAttribute('stroke-width', '1.5');
+      mmSvg.appendChild(line);
+    });
+  }
+
+  document.getElementById('mm-add').addEventListener('click', function(){
+    var id = 'n' + Date.now();
+    mmSnapshot();
+    currentDraft().mindmap.nodes.push({ id:id, x: 30 + Math.random()*40, y: 30 + Math.random()*40, text:'새 노드' });
+    save(); renderMindmap();
+    focusNodeForEdit(id);
+    npcSay('새 가지가 생겼어요. 바로 이름을 입력해보세요!');
+  });
+
+  var mmResetBtn = document.getElementById('mm-reset');
+  var mmResetArmed = false;
+  mmResetBtn.addEventListener('click', function(){
+    if(!mmResetArmed){
+      mmResetArmed = true;
+      mmResetBtn.textContent = '다시 클릭하면 초기화돼요';
+      mmResetBtn.classList.add('confirming');
+      setTimeout(function(){
+        mmResetArmed = false;
+        mmResetBtn.textContent = '초기화';
+        mmResetBtn.classList.remove('confirming');
+      }, 2600);
+    } else {
+      mmSnapshot();
+      currentDraft().mindmap = makeDefaultMindmap();
+      mmViewFitted = false;
+      save(); renderMindmap();
+      mmResetArmed = false;
+      mmResetBtn.textContent = '초기화';
+      mmResetBtn.classList.remove('confirming');
+      npcSay('마인드맵을 새로 시작하네요. 처음이 제일 어려운 법이에요!');
+    }
+  });
+
+  window.addEventListener('resize', function(){
+    if(!document.getElementById('panel-mindmap').hidden) drawEdges();
+  });
+
+  /* ---------------- init ---------------- */
+  goTo('draftlist');
+})();
+</script>
+
+</body></html>
