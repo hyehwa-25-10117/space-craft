@@ -3,25 +3,25 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root{
-    --bg:#0A0D1C;
-    --surface:#131832;
-    --surface-2:#1B2247;
-    --surface-3:#232C5C;
-    --border:#2E3768;
-    --border-bright:#46508C;
-    --text:#E7EBFB;
-    --text-dim:#8C96C4;
-    --text-faint:#5C6494;
-    --accent:#55E6C1;
-    --accent-dim:rgba(85,230,193,.14);
-    --accent-2:#C084FC;
-    --accent-2-dim:rgba(192,132,252,.14);
-    --warn:#FFB454;
-    --warn-dim:rgba(255,180,84,.14);
-    --good:#6EE7A8;
-    --good-dim:rgba(110,231,168,.14);
-    --danger:#FB7185;
-    --danger-dim:rgba(251,113,133,.14);
+    --bg:#F6F7FB;
+    --surface:#FFFFFF;
+    --surface-2:#F0F2F9;
+    --surface-3:#E5E8F3;
+    --border:#DBE0EF;
+    --border-bright:#B9C0DE;
+    --text:#181B2E;
+    --text-dim:#565D82;
+    --text-faint:#8890AF;
+    --accent:#0EA486;
+    --accent-dim:rgba(14,164,134,.12);
+    --accent-2:#8A3FE0;
+    --accent-2-dim:rgba(138,63,224,.12);
+    --warn:#B8720A;
+    --warn-dim:rgba(184,114,10,.12);
+    --good:#1E9A5C;
+    --good-dim:rgba(30,154,92,.12);
+    --danger:#D6304A;
+    --danger-dim:rgba(214,48,74,.12);
     --font-display:'Chakra Petch','IBM Plex Sans KR',sans-serif;
     --font-body:'IBM Plex Sans KR','Chakra Petch',sans-serif;
     --font-mono:'IBM Plex Mono','Chakra Petch',monospace;
@@ -33,7 +33,7 @@
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   }
-  html{color-scheme:dark;}
+  html{color-scheme:light;}
   body{
     background:var(--bg);
     color:var(--text);
@@ -56,7 +56,7 @@
   .console-header{
     display:flex;flex-wrap:wrap;align-items:center;gap:20px;
     padding:16px 24px;
-    background:linear-gradient(180deg,rgba(19,24,50,.92),rgba(19,24,50,.75));
+    background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.75));
     border-bottom:1px solid var(--border);
     backdrop-filter:blur(6px);
     position:sticky;top:0;z-index:10;
@@ -551,7 +551,7 @@
       var w = canvas.width = window.innerWidth;
       var h = canvas.height = window.innerHeight;
       ctx.clearRect(0,0,w,h);
-      ctx.fillStyle = '#0A0D1C';
+      ctx.fillStyle = '#F6F7FB';
       ctx.fillRect(0,0,w,h);
       var seed = 42;
       function rand(){ seed = (seed*9301+49297)%233280; return seed/233280; }
@@ -561,7 +561,7 @@
         var b = rand();
         ctx.beginPath();
         ctx.arc(x,y,r,0,Math.PI*2);
-        ctx.fillStyle = b>0.85 ? 'rgba(197,214,255,0.9)' : 'rgba(140,150,196,0.55)';
+        ctx.fillStyle = b>0.85 ? 'rgba(86,93,130,0.45)' : 'rgba(140,150,196,0.28)';
         ctx.fill();
       }
     }
@@ -1757,7 +1757,7 @@
       line.setAttribute('y1', (a.y/100*MM_WORLD_H));
       line.setAttribute('x2', (b.x/100*MM_WORLD_W));
       line.setAttribute('y2', (b.y/100*MM_WORLD_H));
-      line.setAttribute('stroke', '#46508C');
+      line.setAttribute('stroke', '#B9C0DE');
       line.setAttribute('stroke-width', '1.5');
       mmSvg.appendChild(line);
     });
