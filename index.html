@@ -393,7 +393,23 @@
   .npc-bar-fill{height:100%;width:0%;transition:width .3s ease;}
   .npc-bar-fill.exp{background:linear-gradient(90deg,var(--accent-2),var(--accent));}
   .npc-bar-fill.hunger{background:linear-gradient(90deg,var(--warn),var(--good));}
-  .npc-dialog-text{color:var(--text);font-size:.95rem;line-height:1.65;white-space:pre-line;}
+  .npc-chat-log{
+    display:flex;flex-direction:column;gap:8px;
+    max-height:220px;overflow-y:auto;padding-right:2px;
+  }
+  .npc-chat-msg{
+    max-width:85%;padding:8px 12px;border-radius:var(--radius-m);
+    font-size:.88rem;line-height:1.5;white-space:pre-wrap;
+  }
+  .npc-chat-msg.bot{align-self:flex-start;background:var(--surface-2);color:var(--text);}
+  .npc-chat-msg.user{align-self:flex-end;background:var(--accent-dim);color:var(--text);}
+  .npc-chat-msg.loading{color:var(--text-faint);font-style:italic;}
+  .npc-chat-msg.error{color:var(--danger);}
+  .npc-chat-row{display:flex;gap:8px;margin-top:2px;}
+  .npc-chat-input{
+    flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);
+    color:var(--text);padding:8px 12px;font-size:.88rem;
+  }
   .npc-dialog-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
   .npc-avatar{position:relative;}
   .npc-hunger-dot{
@@ -437,7 +453,11 @@
         <div class="npc-bar-row"><span class="npc-bar-label">EXP</span><div class="npc-bar-track"><div class="npc-bar-fill exp" id="npcExpFill"></div></div></div>
         <div class="npc-bar-row"><span class="npc-bar-label">포만감</span><div class="npc-bar-track"><div class="npc-bar-fill hunger" id="npcHungerFill"></div></div></div>
       </div>
-      <div class="npc-dialog-text" id="npcDialogText"></div>
+      <div class="npc-chat-log" id="npcChatLog"></div>
+      <div class="npc-chat-row">
+        <input type="text" class="npc-chat-input" id="npcChatInput" placeholder="말랑이에게 말을 걸어보세요" maxlength="300">
+        <button class="btn primary" id="npcChatSend">보내기</button>
+      </div>
       <div class="npc-dialog-actions" id="npcDialogActions">
         <button class="btn" id="npcFeedBtn">🍪 먹이 주기</button>
       </div>
@@ -583,6 +603,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   "use strict";
@@ -658,83 +679,136 @@
     };
   }
 
+  function normalizeState(input){
+    var s = input || seedState();
+    if(!s.pet){ s.pet = { exp: 0, hunger: 100, lastSeen: Date.now() }; }
+
+    /* ---- legacy migration: very old single `s.draft` -> top-level `s.drafts` ---- */
+    if(s.draft && typeof s.draft.text === 'string' && s.draft.text.trim()){
+      if(!s.drafts) s.drafts = [];
+      s.drafts.unshift({ id: 'd' + Date.now(), title: 'New project 1', text: s.draft.text });
+    }
+    delete s.draft;
+
+    /* ---- legacy migration: top-level `s.mindmap`/`s.drafts` -> a project ---- */
+    if(!s.projects) s.projects = [];
+    if(s.mindmap || s.drafts){
+      var legacyProject = {
+        id: 'p' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        name: '프로젝트 1',
+        mindmap: s.mindmap || makeDefaultMindmap(),
+        drafts: s.drafts || [],
+        currentDraftId: (s.currentDraftId != null ? s.currentDraftId : null)
+      };
+      s.projects.unshift(legacyProject);
+      s.currentProjectId = legacyProject.id;
+      delete s.mindmap;
+      delete s.drafts;
+      delete s.currentDraftId;
+    }
+
+    if(!s.projects.length) s.projects.push(makeProject('프로젝트 1'));
+    if(!s.currentProjectId || !s.projects.some(function(p){ return p.id === s.currentProjectId; })){
+      s.currentProjectId = s.projects[0].id;
+    }
+
+    /* ---- migration: mindmap moves from project-level to per-draft, plus field defaults ---- */
+    s.projects.forEach(function(p){
+      if(!p.drafts) p.drafts = [];
+
+      if(p.mindmap){
+        if(!p.drafts.length){
+          p.drafts.push({ id: 'd' + Date.now() + '-' + Math.floor(Math.random() * 1000), title: 'New project 1', text: '', mindmap: p.mindmap });
+        } else {
+          p.drafts.forEach(function(d){
+            if(!d.mindmap) d.mindmap = JSON.parse(JSON.stringify(p.mindmap));
+          });
+        }
+        delete p.mindmap;
+      }
+
+      if(!p.drafts.length) p.drafts.push(makeDraft('New project 1'));
+
+      p.drafts.forEach(function(d, idx){
+        if(!d.mindmap) d.mindmap = makeDefaultMindmap();
+        if(!d.mindmap.theme) d.mindmap.theme = 'aurora';
+        if(!d.mindmap.view) d.mindmap.view = { panX: 0, panY: 0, zoom: 1 };
+        if(!d.mindmap.collapsedIds) d.mindmap.collapsedIds = {};
+        if(typeof d.text !== 'string') d.text = '';
+        if(typeof d.title !== 'string') d.title = '대본';
+        if(typeof d.createdAt !== 'number'){
+          var parsed = parseInt(String(d.id || '').replace(/^d/, ''), 10);
+          d.createdAt = isNaN(parsed) ? (Date.now() + idx) : parsed;
+        }
+      });
+
+      if(p.currentDraftId == null || !p.drafts.some(function(d){ return d.id === p.currentDraftId; })){
+        p.currentDraftId = p.drafts[0].id;
+      }
+    });
+
+    return s;
+  }
+
   var state;
   try{
     var raw = localStorage.getItem(STORE_KEY);
-    state = raw ? JSON.parse(raw) : seedState();
-  }catch(e){ state = seedState(); }
-  if(!state.pet){ state.pet = { exp: 0, hunger: 100, lastSeen: Date.now() }; }
-
-  /* ---- legacy migration: very old single `state.draft` -> top-level `state.drafts` ---- */
-  if(state.draft && typeof state.draft.text === 'string' && state.draft.text.trim()){
-    if(!state.drafts) state.drafts = [];
-    state.drafts.unshift({ id: 'd' + Date.now(), title: 'New project 1', text: state.draft.text });
-  }
-  delete state.draft;
-
-  /* ---- legacy migration: top-level `state.mindmap`/`state.drafts` -> a project ---- */
-  if(!state.projects) state.projects = [];
-  if(state.mindmap || state.drafts){
-    var legacyProject = {
-      id: 'p' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-      name: '프로젝트 1',
-      mindmap: state.mindmap || makeDefaultMindmap(),
-      drafts: state.drafts || [],
-      currentDraftId: (state.currentDraftId != null ? state.currentDraftId : null)
-    };
-    state.projects.unshift(legacyProject);
-    state.currentProjectId = legacyProject.id;
-    delete state.mindmap;
-    delete state.drafts;
-    delete state.currentDraftId;
-  }
-
-  if(!state.projects.length) state.projects.push(makeProject('프로젝트 1'));
-  if(!state.currentProjectId || !state.projects.some(function(p){ return p.id === state.currentProjectId; })){
-    state.currentProjectId = state.projects[0].id;
-  }
+    state = normalizeState(raw ? JSON.parse(raw) : null);
+  }catch(e){ state = normalizeState(null); }
 
   function currentProject(){
     return state.projects.find(function(p){ return p.id === state.currentProjectId; }) || state.projects[0];
   }
 
-  /* ---- migration: mindmap moves from project-level to per-draft, plus field defaults ---- */
-  state.projects.forEach(function(p){
-    if(!p.drafts) p.drafts = [];
+  /* ---------------- supabase sync ---------------- */
+  var SUPABASE_URL = 'https://zonxibpjgxvwdvidwdnt.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_T4je-3zZum6seJCAjk3mJw_LUWMwtut';
+  var SYNC_ROW_ID = 'default';
+  var supabaseClient = (window.supabase && window.supabase.createClient)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
+  var syncPushTimer;
 
-    if(p.mindmap){
-      if(!p.drafts.length){
-        p.drafts.push({ id: 'd' + Date.now() + '-' + Math.floor(Math.random() * 1000), title: 'New project 1', text: '', mindmap: p.mindmap });
-      } else {
-        p.drafts.forEach(function(d){
-          if(!d.mindmap) d.mindmap = JSON.parse(JSON.stringify(p.mindmap));
-        });
-      }
-      delete p.mindmap;
-    }
+  function pushStateToSupabase(){
+    if(!supabaseClient) return;
+    supabaseClient.from('space_craft_state')
+      .upsert({ id: SYNC_ROW_ID, data: state })
+      .then(function(res){ if(res.error) console.warn('supabase sync failed', res.error); })
+      .catch(function(err){ console.warn('supabase sync failed', err); });
+  }
 
-    if(!p.drafts.length) p.drafts.push(makeDraft('New project 1'));
+  function scheduleRemoteSync(){
+    if(!supabaseClient) return;
+    clearTimeout(syncPushTimer);
+    syncPushTimer = setTimeout(pushStateToSupabase, 900);
+  }
 
-    p.drafts.forEach(function(d, idx){
-      if(!d.mindmap) d.mindmap = makeDefaultMindmap();
-      if(!d.mindmap.theme) d.mindmap.theme = 'aurora';
-      if(!d.mindmap.view) d.mindmap.view = { panX: 0, panY: 0, zoom: 1 };
-      if(!d.mindmap.collapsedIds) d.mindmap.collapsedIds = {};
-      if(typeof d.text !== 'string') d.text = '';
-      if(typeof d.title !== 'string') d.title = '대본';
-      if(typeof d.createdAt !== 'number'){
-        var parsed = parseInt(String(d.id || '').replace(/^d/, ''), 10);
-        d.createdAt = isNaN(parsed) ? (Date.now() + idx) : parsed;
-      }
-    });
+  function activeTabName(){
+    var active = document.querySelector('.tab.active');
+    return active ? active.dataset.tab : 'draftlist';
+  }
 
-    if(p.currentDraftId == null || !p.drafts.some(function(d){ return d.id === p.currentDraftId; })){
-      p.currentDraftId = p.drafts[0].id;
-    }
-  });
+  function syncFromRemoteOnLoad(){
+    if(!supabaseClient) return;
+    supabaseClient.from('space_craft_state').select('data').eq('id', SYNC_ROW_ID).maybeSingle()
+      .then(function(res){
+        if(res.error) throw res.error;
+        var remoteData = res.data && res.data.data;
+        if(remoteData && (!state.updatedAt || (remoteData.updatedAt || 0) > state.updatedAt)){
+          state = normalizeState(remoteData);
+          try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+          goTo(activeTabName());
+        } else if(!remoteData){
+          pushStateToSupabase();
+        }
+      })
+      .catch(function(err){ console.warn('supabase initial sync failed', err); });
+  }
 
   function save(){
+    state.updatedAt = Date.now();
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+    scheduleRemoteSync();
   }
 
   /* ---------------- toast ---------------- */
@@ -757,9 +831,11 @@
   var npcPetStageEl = document.getElementById('npcPetStage');
   var npcExpFill = document.getElementById('npcExpFill');
   var npcHungerFill = document.getElementById('npcHungerFill');
-  var npcDialogText = document.getElementById('npcDialogText');
   var npcDialogClose = document.getElementById('npcDialogClose');
   var npcFeedBtn = document.getElementById('npcFeedBtn');
+  var npcChatLog = document.getElementById('npcChatLog');
+  var npcChatInput = document.getElementById('npcChatInput');
+  var npcChatSend = document.getElementById('npcChatSend');
 
   /* ---- tamagotchi-style pet ---- */
   var PET_STAGES = [
@@ -891,15 +967,77 @@
       '저 좀 챙겨주세요! 먹이도 주고, 할 일도 하나 끝내볼까요?'
     ]
   };
+  var npcChatHistory = [];
+  function npcAppendBubble(cls, text){
+    var div = document.createElement('div');
+    div.className = 'npc-chat-msg ' + cls;
+    div.textContent = text;
+    npcChatLog.appendChild(div);
+    npcChatLog.scrollTop = npcChatLog.scrollHeight;
+    return div;
+  }
+  function npcBuildChatPrompt(userText){
+    var historyText = npcChatHistory.slice(-10).map(function(m){
+      return (m.role === 'user' ? '학생' : '말랑이') + ': ' + m.text;
+    }).join('\n');
+    return "너는 'Space Craft'라는 발표 준비 앱에 사는 노란 곰 모양 젤리 캐릭터 '말랑이'야. 성격은 밝고 다정하고, 학생이 발표 준비를 하는 걸 옆에서 응원해주는 마스코트야. 반말로, 짧고 귀엽게 2~3문장 이내로 대답해.\n\n지금까지의 대화:\n" + historyText + "\n\n학생: " + userText + "\n말랑이:";
+  }
+  function npcSendChat(){
+    var text = (npcChatInput.value || '').trim();
+    if(!text) return;
+    npcChatHistory.push({ role:'user', text:text });
+    npcAppendBubble('user', text);
+    npcChatInput.value = '';
+    npcChatSend.disabled = true;
+    npcChatInput.disabled = true;
+    var loadingEl = npcAppendBubble('bot loading', '생각하는 중...');
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 300,
+        messages: [{ role: "user", content: npcBuildChatPrompt(text) }]
+      })
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        var out = (data.content || [])
+          .filter(function(block){ return block && block.type === 'text'; })
+          .map(function(block){ return block.text; })
+          .join('').trim();
+        loadingEl.remove();
+        npcChatHistory.push({ role:'bot', text: out || '(...할 말이 없어요)' });
+        npcAppendBubble('bot', out || '(...할 말이 없어요)');
+      })
+      .catch(function(){
+        loadingEl.remove();
+        npcAppendBubble('bot error', '지금은 대답하기 어려워요. 잠시 후 다시 말 걸어줄래요?');
+      })
+      .then(function(){
+        npcChatSend.disabled = false;
+        npcChatInput.disabled = false;
+        npcChatInput.focus();
+      });
+  }
+  npcChatSend.addEventListener('click', npcSendChat);
+  npcChatInput.addEventListener('keydown', function(ev){
+    if(ev.key === 'Enter'){ ev.preventDefault(); npcSendChat(); }
+  });
+
   function npcOpenDialog(line){
     applyPetDecay(); save(); refreshPetUI();
     npcJellyBounce();
-    if(!line){
-      var lines = NPC_GREETINGS[petMood()];
-      line = lines[Math.floor(Math.random()*lines.length)];
+    if(!npcChatHistory.length){
+      if(!line){
+        var lines = NPC_GREETINGS[petMood()];
+        line = lines[Math.floor(Math.random()*lines.length)];
+      }
+      npcChatHistory.push({ role:'bot', text:line });
+      npcAppendBubble('bot', line);
     }
-    npcDialogText.textContent = line;
     npcOverlay.hidden = false;
+    npcChatInput.focus();
   }
   function npcCloseDialog(){ npcOverlay.hidden = true; }
   npcDialogClose.addEventListener('click', npcCloseDialog);
@@ -1853,6 +1991,7 @@
 
   /* ---------------- init ---------------- */
   goTo('draftlist');
+  syncFromRemoteOnLoad();
 })();
 </script>
 
